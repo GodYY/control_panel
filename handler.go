@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"github.com/kataras/golog"
 	"github.com/kataras/iris/v12"
@@ -165,25 +166,56 @@ func onScriptFileOp(ctx context.Context) {
 
 		case 3:
 			// 执行
+			ctx.ContentType("text/plain")
+			ctx.Header("Transfer-Encoding", "chunked")
 
-			if bytes, err := exec.Command("sh", "-c", "pwd").Output(); err == nil {
-				ctx.Application().Logger().Debug(string(bytes))
-			} else {
-				ctx.Application().Logger().Debug(err)
-			}
+			notifyClose := ctx.Request().Context().Done()
 
-			cmd := exec.Command("sh", path.Join(gConfig.ScriptPath, file))
-			bytes, err := cmd.CombinedOutput()
+			cmd := exec.Command("sh", "-xe", path.Join(gConfig.ScriptPath, file))
 
+			r, w, err := os.Pipe()
 			if err != nil {
-				result[fCode] = 1
-				result[fDetail] = err.Error()
-			} else {
-				result[fCode] = 0
-				result[fDetail] = "ok"
+				ctx.Writef("open pipe: %s.", err.Error())
+				return
 			}
 
-			result["output"] = string(bytes)
+			cmd.Stdout = w
+			cmd.Stderr = w
+
+			if err = cmd.Start(); err != nil {
+				ctx.Writef("start: %s.", err.Error())
+				return
+			}
+
+			go func() {
+				err = cmd.Wait()
+				w.Close()
+			}()
+
+			scanner := bufio.NewScanner(r)
+			scan := true
+			for scan {
+				select {
+				case <-notifyClose:
+					scan = false
+
+				default:
+					if !scanner.Scan() {
+						scan = false
+						break
+					}
+					s := scanner.Text()
+					ctx.Writef("%s\n", s)
+					ctx.ResponseWriter().Flush()
+					//time.Sleep(time.Second * 1)
+				}
+			}
+
+			r.Close()
+			if err != nil {
+				ctx.WriteString(err.Error())
+			}
+			return
 
 		default:
 			result["code"] = 1

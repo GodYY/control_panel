@@ -56,22 +56,7 @@ function init_tab_scripts() {
 
         item.btn_exec.on("click", function () {
             console.log(`${name} exec click`);
-            modal_script_output.run(name);
-            jq.ajax({
-                url: `/script/${name}`,
-                method: 'POST',
-                contentType: 'application/json; charset=UTF-8',
-                data: JSON.stringify({op:3}),
-
-                success: function (result) {
-                    modal_script_output.over(result);
-                },
-
-                error: function (jqXHR, textStatus, errorThrown) {
-                    modal_script_output.error(`${textStatus}: ${errorThrown}`);
-                },
-            });
-
+            modal_script_exec.exec(name);
         });
 
         item.btn_rm.on("click", function () {
@@ -107,11 +92,18 @@ function init_tab_scripts() {
         item.item.remove();
     };
 
-    var modal_script_output = tab_scripts.find('#modal-script-output');
+    var $modal_script_exec = tab_scripts.find('#modal-script-exec');
+    var modal_script_exec = {
+        modal: $modal_script_exec,
+        btn_close: $modal_script_exec.find('#btn-close'),
+        script_name: $modal_script_exec.find('#script-name'),
+        label_tips: $modal_script_exec.find('#label-tips'),
+        output: $modal_script_exec.find('#output'),
+    };
     {
-        modal_script_output.modal({backdrop: false, show: false});
+        modal_script_exec.modal.modal({backdrop: false, show: false});
 
-        modal_script_output.on('show.bs.modal', function(){
+        modal_script_exec.modal.on('show.bs.modal', function(){
             var $this = jq(this);
             var $modal_dialog = $this.find('.modal-dialog');
             // 关键代码，如没将modal设置为 block，则$modala_dialog.height() 为零
@@ -119,39 +111,55 @@ function init_tab_scripts() {
             $modal_dialog.css({'margin-top': Math.max(0, (jq(window).height() - $modal_dialog.height()) / 2) });
         });
 
-        modal_script_output.run = function (script_name) {
-            this.find('#script-name').html(script_name);
-            this.find('#result').hide();
-            this.find('#info').show();
-            this.find('#btn-close').hide();
-            this.find('#label-info').html('running...');
-            this.modal('show');
-        };
-
-        modal_script_output.over = function (result) {
-            var $result = this.find('#result');
-            $result.show();
-            this.find('#info').hide();
-            this.find('#btn-close').show();
-            var $code = $result.find('#code');
-            if (result.code === 0) {
-                $code.attr('class', 'label label-success');
-            } else {
-                $code.attr('class', 'label label-danger');
+        modal_script_exec.modal.on('hide.bs.modal', function () {
+            if (modal_script_exec.xhr) {
+                if (modal_script_exec.xhr.readyState !== 4) {
+                    modal_script_exec.xhr.abort()
+                }
+                modal_script_exec.xhr = null
             }
-            $code.html(result.code);
+        });
 
-            $result.find('#detail').html(result.detail);
-            $result.find('#output').html(result.output);
-
-            this.modal('show');
+        modal_script_exec.setOutput = function (output) {
+            modal_script_exec.output.html(output);
+            modal_script_exec.output.scrollTop(modal_script_exec.output.prop("scrollHeight"));
         };
 
-        modal_script_output.error = function (error) {
-            this.find('#info').show();
-            this.find('#btn-close').hide();
-            this.find('#label-info').html(error);
-            this.modal('show');
+        modal_script_exec.exec = function (script_name) {
+            this.script_name.html(script_name);
+            this.label_tips.html("running...");
+            this.output.html('');
+            this.modal.modal('show');
+
+            try
+            {
+                var xhr = new XMLHttpRequest();
+                xhr.open('POST', `/script/${script_name}`);
+                xhr.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');
+                xhr.onloadstart = function (evt) {
+                    modal_script_exec.setOutput(xhr.response);
+                };
+                xhr.onprogress = function (evt) {
+                    modal_script_exec.setOutput(xhr.response);
+                };
+                xhr.onload = function (evt) {
+                    console.log('run', script_name, 'over');
+                    modal_script_exec.label_tips.html('over');
+                    modal_script_exec.setOutput(xhr.response);
+                };
+                xhr.onerror = function (evt ) {
+                    console.log('run', script_name, 'error');
+                    modal_script_exec.label_tips.html('error');
+                };
+
+                xhr.send(JSON.stringify({op:3}));
+
+                this.xhr = xhr;
+            }
+            catch (e) {
+                console.log(e);
+                this.label_tips.html(e);
+            }
         };
     }
 
