@@ -140,6 +140,7 @@ function init_tab_scripts() {
                     modal_script_exec.setOutput(xhr.response);
                 };
                 xhr.onprogress = function (evt) {
+                    console.log(evt)
                     modal_script_exec.setOutput(xhr.response);
                 };
                 xhr.onload = function (evt) {
