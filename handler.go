@@ -117,7 +117,7 @@ func onScriptFileOp(ctx context.Context) {
 				result[fCode] = 1
 				result[fDetail] = "no content"
 			} else {
-				if f, err := os.OpenFile(path.Join(gConfig.ScriptPath, file), os.O_RDWR|os.O_CREATE|os.O_EXCL, 0700); err != nil {
+				if f, err := os.OpenFile(path.Join(gConfig.ScriptPath, file), os.O_RDWR|os.O_CREATE|os.O_EXCL, os.ModePerm); err != nil {
 					result[fCode] = 1
 					if os.IsExist(err) {
 						result[fDetail] = "script exist"
@@ -140,7 +140,7 @@ func onScriptFileOp(ctx context.Context) {
 				result[fCode] = 1
 				result[fDetail] = "no content"
 			} else {
-				if f, err := os.OpenFile(path.Join(gConfig.ScriptPath, file), os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0777); err != nil {
+				if f, err := os.OpenFile(path.Join(gConfig.ScriptPath, file), os.O_RDWR|os.O_CREATE|os.O_TRUNC, os.ModePerm); err != nil {
 					result[fCode] = 1
 					result[fDetail] = err.Error()
 				} else if _, err = f.WriteString(data.Content); err != nil {
