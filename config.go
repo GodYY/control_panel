@@ -8,6 +8,7 @@ import (
 
 type config struct {
 	ScriptPath string `toml:"ScriptPath"`
+	ServeAddr  string `toml:"ServeAddr"`
 }
 
 var gConfig *config

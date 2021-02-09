@@ -11,6 +11,7 @@ import (
 	"os/exec"
 	"path"
 	"path/filepath"
+	"strings"
 )
 
 func onProcessesGet(ctx context.Context) {
@@ -30,6 +31,61 @@ func onProcessesGet(ctx context.Context) {
 		}
 	} else {
 		ctx.WriteString(string(bytes))
+	}
+}
+
+func onProcessesStop(ctx context.Context) {
+	var data struct {
+		ID     string `json:"id"`
+		Signal string `json:"signal"`
+	}
+
+	if err := ctx.ReadJSON(&data); err != nil {
+		ctx.Problem(err)
+		return
+	}
+
+	var result struct {
+		Code   int    `json:"code"`
+		Detail string `json:"detail"`
+	}
+
+	defer ctx.JSON(&result)
+
+	if len(data.ID) == 0 {
+		result.Code = 1
+		result.Detail = "invalid id"
+		return
+	}
+
+	var signal string
+	switch strings.ToLower(data.Signal) {
+	case "interrupt":
+		signal = "-INT"
+
+	case "kill":
+		signal = "-KILL"
+
+	case "terminate":
+		signal = "-TERM"
+
+	default:
+		result.Code = 1
+		result.Detail = "invalid signal"
+		return
+	}
+
+	cmd := exec.Command("kill", signal, data.ID)
+	if bytes, err := cmd.CombinedOutput(); err != nil {
+		result.Code = 1
+		if (len(bytes)) > 0 {
+			result.Detail = fmt.Sprintf("%s. %s.", string(bytes), err)
+		} else {
+			result.Detail = err.Error()
+		}
+	} else {
+		result.Code = 0
+		result.Detail = "ok"
 	}
 }
 
@@ -229,6 +285,8 @@ func onScriptFileOp(ctx context.Context) {
 
 func initHandler(app *iris.Application) {
 	app.Get("/processes", onProcessesGet)
+
+	app.Post("/processes/stop", onProcessesStop)
 
 	app.Get("/script", onScriptGet)
 

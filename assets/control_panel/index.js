@@ -451,15 +451,87 @@ function init_tab_scripts() {
 }
 
 function init_tab_processes() {
+    var tab_processes = jq('#processes');
+    var btn_search_processes = tab_processes.find('#btn-search-processes');
+    var processes_details = tab_processes.find('#processes-details');
+    var input_processes_key = tab_processes.find('#input-processes-key');
+    var btn_stop_process = tab_processes.find('#btn-stop-process');
+    var btn_kill = tab_processes.find('#btn-kill');
+    var btn_interrupt = tab_processes.find('#btn-interrupt');
+    var btn_terminate = tab_processes.find('#btn-terminate');
+    var input_process_id = tab_processes.find('#input-process-id');
+
+    var $warning = tab_processes.find('#warning');
+    var warning = {
+        $: $warning,
+        content: $warning.find('#warning-content'),
+    };
+    warning.$.find('#btn-close').on('click', function () {
+        warning.hide();
+    });
+    warning.show = function (content) {
+        this.content.html(content);
+        this.$.show(100);
+    };
+    warning.hide = function () {
+        this.$.hide(100);
+    };
+    warning.$.hide();
+    // input_process_id.popover({
+    //     title: input_process_id.attr('placeholder'),
+    //     delay: {show: 500, hide: 100},
+    //     container: 'body',
+    // });
+
     jq('#tab-processes').on('show.bs.tab', function (e) {
-        console.log("tab-processes show!")
+        console.log("tab-processes show!");
+        btn_search_processes.trigger('click');
     });
 
-    var btn_search_processes = jq('#btn-search-processes');
-    var processes_details = jq('#processes-details');
-    var input_processes_key = jq('#input-processes-key');
+    var stopProcess = function (id, signal) {
+        if (id.length === 0) {
+            // input_process_id.popover('show');
+            warning.show('you must input process id!');
+            return;
+        }
 
-    // processes_details.text("<strong>123test</strong>")
+        warning.hide();
+
+        btn_stop_process.attr('disabled', '');
+
+        jq.ajax({
+            url: '/processes/stop',
+            method: 'POST',
+            contentType: 'application/json; charset=UTF-8',
+            data:JSON.stringify({id: id, signal:signal}),
+            dataType: 'json',
+            success: function (data) {
+                console.log(data);
+                if (data.code === 1) {
+                    warning.show(data.detail);
+                }
+            },
+
+            error: function (xhr, textStatus, errorThrown) {
+                console.log(textStatus, errorThrown);
+                warning.show(data.detail);
+            },
+
+            complete: function () {
+                btn_stop_process.attr('disabled', null)
+            }
+        });
+    };
+
+    btn_kill.on('click', function () {
+        stopProcess(input_process_id.val(), 'kill');
+    });
+    btn_interrupt.on('click', function () {
+        stopProcess(input_process_id.val(), 'interrupt')
+    });
+    btn_terminate.on('click', function () {
+        stopProcess(input_process_id.val(), 'terminate')
+    });
 
     // 查询 processes
     btn_search_processes.on('click', function () {
@@ -469,7 +541,7 @@ function init_tab_processes() {
 
         var url = "/processes?key=" + input_processes_key.val()
 
-        console.debug("query processes, url=%s", url)
+        console.debug("query processes, url=%s", url);
 
         jq.ajax({
             url: url,
@@ -489,6 +561,8 @@ function init_tab_processes() {
         })
 
     });
+
+    jq()
 }
 
 

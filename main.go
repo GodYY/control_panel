@@ -40,7 +40,7 @@ func main() {
 
 	app.HandleDir("", "./assets/control_panel")
 
-	if err := app.Run(iris.Addr(":8080")); err != nil {
+	if err := app.Run(iris.Addr(gConfig.ServeAddr)); err != nil {
 		log.Fatalln(err)
 	}
 

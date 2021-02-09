@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>控制面板</title>
     <link href="./assets/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <link href="./index.css" rel="stylesheet">
 </head>
 <body class="container">
 
@@ -44,24 +45,24 @@
             </p>
         </div>
         <div role="tabpanel" class="tab-pane fade" id="shell-scripts">
-            <table class="table table-bordered table-hover">
-                <caption class="text-center">
-                    <label>脚本文件</label>
-                    <button id="btn-new-script" class="btn btn-default btn-sm">新建</button>
-                </caption>
-                <colgroup>
-                    <col>
-                    <col style="width: 200px; alignment: bottom">
-                </colgroup>
-                <thead>
-                    <tr>
-                        <th>文件</th>
-                        <th>操作</th>
-                    </tr>
-                </thead>                <tbody id="table-scripts-body">
-
-                </tbody>
-            </table>
+                <table class="table table-bordered table-hover">
+                    <caption class="text-center">
+                        <label>脚本文件</label>
+                        <button id="btn-new-script" class="btn btn-default btn-sm">新建</button>
+                    </caption>
+                    <colgroup>
+                        <col>
+                        <col style="width: 200px; alignment: bottom">
+                    </colgroup>
+                    <thead>
+                        <tr>
+                            <th>文件</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-scripts-body">
+                    </tbody>
+                </table>
             <div id="modal-script-exec" class="modal fade" tabindex="-1" role="dialog">
                 <div class="modal-dialog" role="document">
                     <div class="modal-content">
@@ -131,7 +132,25 @@
                     <button id="btn-search-processes" class="btn btn-default" type="button">查询</button>
                 </span>
             </div>
-            <pre id="processes-details" style="white-space: pre"></pre>
+            <div class="input-group">
+                <input id="input-process-id" type="number" class="form-control" placeholder="input process id..." title="input process id..." data-content="you must input process id" data-placement="bottom">
+                <div id="stop-process-dropdown" class="input-group-btn dropdown">
+                    <button id="btn-stop-process" class="btn btn-default dropdown-toggle" data-toggle="dropdown">停止<span class="caret"></span></button>
+                    <ul class="dropdown-menu dropdown-menu-right">
+                        <h6 class="dropdown-header">Signal</h6>
+                        <li><a id="btn-interrupt" href="#">Interrupt</a></li>
+                        <li><a id="btn-kill" href="#">Kill</a></li>
+                        <li><a id="btn-terminate" href="#">Terminate</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div id="warning" class="alert alert-warning" role="alert">
+                <button id="btn-close" type="button" class="close"  aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <span id="warning-content"><strong>Warning!</strong> Better check yourself, you're not looking too good.</span>
+            </div>
+            <div>
+                <pre id="processes-details" style="white-space: pre; height: 20em"></pre>
+            </div>
         </div>
     </div>
 
