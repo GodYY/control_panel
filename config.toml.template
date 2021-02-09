@@ -1,1 +1,3 @@
 ScriptPath = "./assets/scripts"
+
+ServeAddr = ":8080"
